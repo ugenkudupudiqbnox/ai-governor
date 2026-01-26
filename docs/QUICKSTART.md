@@ -201,12 +201,80 @@ You enforced:
 
 ---
 
-## 🔜 Next Steps
+## Demo Application
 
-* Integrate `EnforcementOrchestrator` into your API
-* Use CLI in CI to block unsafe configs
-* Add audit sinks (file / SIEM)
-* Extend policies (regions, tools, agents)
+This repository includes a **minimal demo application** that shows how **ai-governor** is intended to be used in a real system.
+
+The demo simulates an application boundary that wants to call an LLM, with governance enforced **before** any model invocation.
+
+No external APIs, frameworks, or providers are used.
+
+---
+
+### What the Demo Shows
+
+The demo demonstrates:
+
+* Where ai-governor sits in an application
+* How policies are evaluated at runtime
+* How decisions (`ALLOW`, `BLOCK`, `MODIFY`) gate execution
+* How PII redaction works for `MODIFY`
+* How audit events are emitted automatically
+
+This is the **canonical integration pattern**.
+
+---
+
+### Location
+
+```
+examples/demo_app/
+```
+
+Contents:
+
+* `app.py` — demo application
+* `policy.yaml` — governance policy
+* `request_allow.json` — allowed request
+* `request_modify.json` — PII redaction example
+* `request_block.json` — blocked request
+
+---
+
+### Run the Demo
+
+From the repository root:
+
+```bash
+python examples/demo_app/app.py examples/demo_app/request_allow.json
+```
+
+Try the other requests to see different governance outcomes:
+
+```bash
+python examples/demo_app/app.py examples/demo_app/request_modify.json
+python examples/demo_app/app.py examples/demo_app/request_block.json
+```
+
+---
+
+### Design Note
+
+The demo intentionally:
+
+* Uses **declared model identifiers** (strings only)
+* Does **not** call a real LLM
+* Focuses purely on **governance correctness**
+
+This keeps the behavior deterministic and easy to reason about.
+
+---
+
+### Why This Matters
+
+Most governance failures happen at **integration boundaries**.
+
+This demo makes that boundary explicit and reproducible.
 
 ---
 
