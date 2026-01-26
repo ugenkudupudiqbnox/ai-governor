@@ -1,0 +1,12 @@
+[project]
+name = "ai-governor"
+version = "0.0.1"
+description = "Model-level governance and compliance framework for LLM systems"
+authors = [{ name = "ai-governor contributors" }]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.9"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
