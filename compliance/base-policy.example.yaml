@@ -1,0 +1,51 @@
+# ai-governor – Base Policy Example
+# Schema version: 0.1
+# Purpose: Reference baseline for production LLM governance
+
+version: 0.1
+
+metadata:
+  name: base-production-policy
+  owner: platform-security
+  environment: production
+  description: >
+    Baseline governance policy enforcing model allowlists,
+    data protection, safety controls, and audit logging
+    for production LLM usage.
+
+model:
+  allow:
+    - gpt-4.1
+    - llama-3.1-70b
+  deny:
+    - "*-preview"
+    - "*-beta"
+  max_tokens: 4096
+
+access:
+  roles:
+    - admin
+    - prod
+
+data:
+  pii:
+    action: redact
+  regions:
+    allowed:
+      - IN
+      - EU
+
+safety:
+  disallowed_topics:
+    - self-harm
+    - illegal-activity
+    - sexual-content-minors
+
+logging:
+  store_prompts: false
+  store_outputs: true
+  retention_days: 90
+
+enforcement:
+  on_violation: block
+
