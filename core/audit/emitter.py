@@ -1,19 +1,15 @@
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from core.decision import Decision
+from core.audit.sinks import AuditSink, StdoutSink
 
 
 @dataclass
 class AuditEvent:
-    """
-    Immutable audit record representing a governance decision.
-    """
-
     event_type: str
     timestamp: str
     decision: str
@@ -35,29 +31,22 @@ class AuditEvent:
             "context": self.context,
         }
 
-    def to_json(self) -> str:
-        return json.dumps(self.to_dict(), sort_keys=True)
-
 
 class AuditEventEmitter:
     """
-    Emits audit events for governance decisions.
-
-    Default implementation writes to stdout.
-    Storage backends can be plugged in later.
+    Emits audit events to one or more sinks.
     """
 
     EVENT_TYPE = "llm_governance_decision"
+
+    def __init__(self, sinks: Optional[List[AuditSink]] = None):
+        self.sinks = sinks or [StdoutSink()]
 
     def emit(
         self,
         decision: Decision,
         context: Optional[Dict[str, Any]] = None,
     ) -> AuditEvent:
-        """
-        Create and emit an audit event from a Decision.
-        """
-
         event = AuditEvent(
             event_type=self.EVENT_TYPE,
             timestamp=self._now(),
@@ -69,16 +58,12 @@ class AuditEventEmitter:
             context=context or {},
         )
 
-        self._write(event)
+        payload = event.to_dict()
+
+        for sink in self.sinks:
+            sink.write(payload)
+
         return event
-
-    def _write(self, event: AuditEvent) -> None:
-        """
-        Write audit event to the sink.
-
-        Default: stdout (safe, visible, testable).
-        """
-        print(event.to_json())
 
     @staticmethod
     def _now() -> str:
