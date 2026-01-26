@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from core.decision import Decision
 from core.audit.sinks import AuditSink, StdoutSink
+from core.audit.sinks import AuditSinkError
 
 
 @dataclass
@@ -61,7 +62,11 @@ class AuditEventEmitter:
         payload = event.to_dict()
 
         for sink in self.sinks:
-            sink.write(payload)
+            try:
+                sink.write(payload)
+            except AuditSinkError:
+                # Fail-fast: governance must not proceed silently
+                raise
 
         return event
 
