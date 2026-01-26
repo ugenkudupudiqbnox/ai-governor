@@ -1,0 +1,17 @@
+version: 0.1
+
+model:
+  allow:
+    - gpt-4.1
+  deny:
+    - "*-preview"
+  max_tokens: 4096
+
+data:
+  regions:
+    allowed:
+      - IN
+      - EU
+  pii:
+    action: redact
+

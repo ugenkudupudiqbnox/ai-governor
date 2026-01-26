@@ -1,0 +1,7 @@
+{
+  "id": "req-allow-1",
+  "model": "gpt-4.1",
+  "region": "IN",
+  "max_tokens": 1024,
+  "prompt": "Summarize this text"
+}
