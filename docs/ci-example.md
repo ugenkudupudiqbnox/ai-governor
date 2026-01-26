@@ -1,27 +1,36 @@
-# CI Pipeline Example (Policy Gating with ai-governor)
+# CI Pipeline Example — Policy Gating with ai-governor (v0.3)
 
-This example shows how to use **ai-governor in CI** to **block unsafe or non-compliant LLM configurations before deployment**.
+This document shows how to use **ai-governor in CI/CD** to **block unsafe or non-compliant LLM configurations before deployment**.
+
+This example is compatible with **ai-governor v0.3 (feature-frozen)** and relies only on **stable CLI behavior**.
+
+---
+
+## What This Pipeline Does
 
 The pipeline will:
 
-* Validate the policy
-* Enforce governance rules
-* Fail the build if governance returns `BLOCK`
-* Allow `MODIFY` and `ALLOW` explicitly
+- Validate the governance policy
+- Enforce governance rules at build time
+- Fail the build if governance returns `BLOCK`
+- Allow `ALLOW` and `MODIFY` explicitly
+- Produce machine-verifiable audit evidence
+
+No model calls are made.
 
 ---
 
 ## Example: GitHub Actions
 
-### Use case
+### Use Case
 
-> Prevent deploying services that use **disallowed models, regions, or unsafe data handling**.
+> Prevent deploying services that use **disallowed models, regions, tools, or unsafe data handling rules**.
 
 ---
 
 ## 1️⃣ Repository Structure (Example)
 
-```
+```text
 .
 ├── policy.yaml
 ├── prompts/
@@ -51,17 +60,19 @@ data:
     action: redact
 ```
 
+This policy is intentionally simple and deterministic.
+
 ---
 
 ## 3️⃣ GitHub Actions Workflow
 
-Create:
+Create the following workflow file:
 
 ```
 .github/workflows/ai-governor.yml
 ```
 
-### ✅ `ai-governor.yml`
+### `ai-governor.yml`
 
 ```yaml
 name: AI Governance Check
@@ -105,46 +116,41 @@ jobs:
             --text @prompts/sample.txt
 ```
 
+If governance returns `BLOCK`, the job fails automatically.
+
 ---
 
 ## 4️⃣ How CI Enforcement Works
 
-The key behavior is driven by **exit codes**:
+ai-governor uses **exit codes** to integrate cleanly with CI systems.
 
-| Exit Code | Meaning | CI Result                   |
-| --------- | ------- | --------------------------- |
-| `0`       | ALLOW   | ✅ Pass                      |
-| `10`      | MODIFY  | ✅ Pass (redaction required) |
-| `20`      | BLOCK   | ❌ Fail                      |
-| `1–3`     | Error   | ❌ Fail                      |
+| Exit Code | Meaning | CI Result |
+|---------|--------|-----------|
+| `0` | ALLOW | ✅ Pass |
+| `10` | MODIFY (redaction required) | ✅ Pass |
+| `20` | BLOCK | ❌ Fail |
+| `1–3` | Validation / runtime error | ❌ Fail |
 
-### Example: BLOCK fails the build
+### Example: BLOCK Fails the Build
 
-If someone changes the workflow to:
+If the workflow is changed to:
 
 ```bash
 --model gpt-4.1-preview
 ```
 
-CI output:
-
-```
-final_decision: BLOCK
-reason: Model 'gpt-4.1-preview' is explicitly denied by policy
-```
-
-➡️ **Pipeline fails automatically**
+The enforcement step exits with code `20`, causing the pipeline to fail.
 
 ---
 
-## 5️⃣ Optional: Capture Audit Logs in CI
+## 5️⃣ Optional: Persist Audit Evidence in CI
 
-You can persist audit evidence as CI artifacts.
+You can capture audit logs as CI artifacts.
 
-### Add this step:
+### Example
 
 ```yaml
-      - name: Save audit logs
+      - name: Capture audit logs
         if: always()
         run: |
           mkdir -p audit
@@ -162,25 +168,23 @@ You can persist audit evidence as CI artifacts.
           path: audit/
 ```
 
-This creates **immutable governance evidence per build**.
+Each line in `audit.jsonl` is a complete, append-only governance decision.
+
+> Note: if audit logging fails, enforcement fails by design.
 
 ---
 
-## 6️⃣ Why This Matters (For Reviewers & Auditors)
+## 6️⃣ What This Proves (For Reviewers & Auditors)
 
-With this pipeline you can prove:
+This pipeline demonstrates that:
 
-* Governance rules exist ✔️
-* They are enforced automatically ✔️
-* Violations block deployment ✔️
-* Decisions are logged ✔️
-* Enforcement is deterministic ✔️
+- Governance rules exist ✔️
+- They are enforced automatically ✔️
+- Violations block deployment ✔️
+- Decisions are logged ✔️
+- Enforcement is deterministic ✔️
 
-This directly supports:
-
-* SOC 2 CC7.x
-* ISO 27001 A.12.4
-* Internal AI governance controls
+These are **technical controls**, not compliance claims.
 
 ---
 
@@ -199,9 +203,8 @@ ai_governance:
 
 ## Key Takeaway
 
-This CI setup turns **AI governance from documentation into an enforceable gate**.
+This CI setup turns **AI governance from documentation into an enforceable deployment gate**.
 
-> If it violates policy, it never ships.
+> If it violates policy, it does not ship.
 
-That’s the real value of **ai-governor**.
-
+That is the core value of **ai-governor**.

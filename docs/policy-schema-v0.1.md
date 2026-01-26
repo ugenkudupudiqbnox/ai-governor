@@ -1,36 +1,29 @@
 # ai-governor Policy Schema v0.1
 
-## Status
+**Status:** Supported (v0.3, feature-frozen)  
+**Scope:** Policy structure and semantics only
 
-* **Version:** 0.1
-* **Stability:** Experimental
-* **Audience:** Platform, security, and AI engineers
-* **Scope:** Runtime governance for LLM inference
+This document defines the **policy schema version `0.1`** as implemented and supported by **ai-governor v0.3**.
 
-This document defines the **minimum viable policy schema** for ai-governor.
+It describes:
+- The valid structure of a governance policy
+- Supported fields and their semantics
+- Explicit non-goals and exclusions
+
+It does **not** define:
+- Legal or regulatory compliance guarantees
+- Model behavior or safety outcomes
+- Enforcement ordering (see `docs/STABILITY.md`)
 
 ---
 
 ## Design Principles
 
-1. **Declarative, not procedural**
-   Policies describe *what must be enforced*, not *how*.
-
-2. **Deterministic enforcement**
-   Every policy evaluation must result in a clear decision:
-
-   * `ALLOW`
-   * `BLOCK`
-   * `MODIFY`
-
-3. **Auditable by default**
-   Policies must produce evidence suitable for security and compliance review.
-
-4. **Model-agnostic**
-   No policy may assume a specific LLM vendor or API.
-
-5. **Small surface area (v0.1)**
-   This schema intentionally excludes advanced features to avoid early complexity.
+- **Deterministic**: the same policy always produces the same decisions
+- **Explicit**: no implicit unions or hidden defaults
+- **Fail-fast**: invalid or ambiguous policies are rejected
+- **Composable**: policies may be layered via inheritance
+- **Auditable**: every decision is traceable to a policy rule
 
 ---
 
@@ -39,75 +32,51 @@ This document defines the **minimum viable policy schema** for ai-governor.
 ```yaml
 version: 0.1
 
-metadata:
-  ...
-
-model:
-  ...
-
-access:
-  ...
-
-data:
-  ...
-
-safety:
-  ...
-
-logging:
-  ...
-
-enforcement:
-  ...
+metadata:        # optional
+model:           # optional
+data:            # optional
+tools:           # optional
 ```
 
-All top-level keys are **optional unless explicitly marked REQUIRED**, but omission may result in default-deny behavior depending on enforcement configuration.
+Fields not listed above are **intentionally unsupported** in schema v0.1.
 
 ---
 
-## 1. version (REQUIRED)
+## 1️⃣ `version` (Required)
 
 ```yaml
 version: 0.1
 ```
 
-* Must be exactly `0.1`
-* Used for schema validation and forward compatibility
+- Must be exactly `"0.1"`
+- Used to select schema validation rules
+- Version mismatches are rejected
 
 ---
 
-## 2. metadata (OPTIONAL, RECOMMENDED)
+## 2️⃣ `metadata` (Optional)
 
-Descriptive and ownership information.
+Arbitrary metadata for human or system context.
 
 ```yaml
 metadata:
-  name: production-llm-policy
   owner: platform-team
   environment: production
-  description: Governance policy for production LLM usage
 ```
 
-### Fields
-
-| Field       | Type   | Description                |
-| ----------- | ------ | -------------------------- |
-| name        | string | Human-readable policy name |
-| owner       | string | Owning team or role        |
-| environment | string | e.g. dev / staging / prod  |
-| description | string | Free-form description      |
+- Not interpreted by enforcement logic
+- Included in audit context when provided
 
 ---
 
-## 3. model (OPTIONAL, STRONGLY RECOMMENDED)
+## 3️⃣ `model` (Optional)
 
-Controls **which models may be used** and with what constraints.
+Defines allowed and denied model identifiers.
 
 ```yaml
 model:
   allow:
     - gpt-4.1
-    - llama-3.1-70b
   deny:
     - "*-preview"
   max_tokens: 4096
@@ -115,198 +84,157 @@ model:
 
 ### Fields
 
-| Field      | Type         | Description                                       |
-| ---------- | ------------ | ------------------------------------------------- |
-| allow      | list[string] | Explicitly allowed model identifiers              |
-| deny       | list[string] | Explicitly denied models (supports glob patterns) |
-| max_tokens | integer      | Maximum tokens allowed per request                |
+| Field | Type | Description |
+|-----|----|-------------|
+| `allow` | list[string] | Allowed model identifiers |
+| `deny` | list[string] | Explicitly denied identifiers |
+| `max_tokens` | integer | Maximum allowed token count |
 
-### Notes
+### Semantics
 
-* If `allow` is defined, models not listed MUST be denied.
-* `deny` always overrides `allow`.
-
----
-
-## 4. access (OPTIONAL)
-
-Defines **who** is allowed to invoke governed LLMs.
-
-```yaml
-access:
-  roles:
-    - admin
-    - prod
-```
-
-### Fields
-
-| Field | Type         | Description          |
-| ----- | ------------ | -------------------- |
-| roles | list[string] | Allowed caller roles |
-
-### Notes
-
-* Role resolution happens outside ai-governor.
-* ai-governor only evaluates role strings passed at runtime.
+- `deny` always takes precedence over `allow`
+- If `allow` is present, models not listed are blocked
+- Identifiers are matched as literal strings or simple wildcards
 
 ---
 
-## 5. data (OPTIONAL)
+## 4️⃣ `data` (Optional)
 
-Controls how sensitive data is handled.
+Defines data-handling governance rules.
+
+### 4.1 Regions
 
 ```yaml
 data:
-  pii:
-    action: redact
   regions:
     allowed:
       - IN
       - EU
 ```
 
-### 5.1 pii
+| Field | Type | Description |
+|-----|----|-------------|
+| `allowed` | list[string] | Allowed region codes |
 
-```yaml
-pii:
-  action: block | redact | allow
-```
-
-| Action | Meaning            |
-| ------ | ------------------ |
-| block  | Reject the request |
-| redact | Mask detected PII  |
-| allow  | No enforcement     |
-
-### 5.2 regions
-
-```yaml
-regions:
-  allowed:
-    - IN
-    - EU
-```
-
-* Restricts inference execution based on detected or declared region.
+If a region is provided at enforcement time and is not allowed, the decision is `BLOCK`.
 
 ---
 
-## 6. safety (OPTIONAL)
-
-High-level content restrictions.
+### 4.2 PII
 
 ```yaml
-safety:
-  disallowed_topics:
-    - self-harm
-    - illegal-activity
+data:
+  pii:
+    action: block | redact
+```
+
+| Action | Behavior |
+|------|----------|
+| `block` | Request is blocked if PII is detected |
+| `redact` | PII is deterministically removed and request is modified |
+
+Notes:
+- Absence of a `pii` policy implies no PII enforcement
+- PII detection is deterministic and rule-based (not ML)
+
+---
+
+## 5️⃣ `tools` (Optional)
+
+Defines governance rules for tool or agent invocation.
+
+```yaml
+tools:
+  allow:
+    - search
+    - summarize
+  deny:
+    - execute_code
 ```
 
 ### Fields
 
-| Field             | Type         | Description                       |
-| ----------------- | ------------ | --------------------------------- |
-| disallowed_topics | list[string] | Topics that must not be generated |
+| Field | Type | Description |
+|-----|----|-------------|
+| `allow` | list[string] | Allowed tool names |
+| `deny` | list[string] | Explicitly denied tool names |
 
-### Notes
+### Semantics
 
-* Topic detection is implementation-specific.
-* v0.1 favors deterministic or lightweight classifiers.
+- `deny` always takes precedence
+- If `allow` is present, tools not listed are blocked
+- Absence of `tools` policy implies no tool restrictions
+
+Tool argument-level governance is **out of scope for v0.1**.
 
 ---
 
-## 7. logging (OPTIONAL, RECOMMENDED)
+## 6️⃣ Policy Inheritance (`extends`)
 
-Defines **what evidence is stored**.
+Policies may extend a single base policy.
 
 ```yaml
-logging:
-  store_prompts: false
-  store_outputs: true
-  retention_days: 90
+extends: base-policy.yaml
 ```
 
-### Fields
+Rules:
+- Single inheritance only
+- Inheritance is resolved before validation
+- Child policies override base policies explicitly
+- `null` removes an inherited field
+- Cycles are rejected
 
-| Field          | Type    | Description         |
-| -------------- | ------- | ------------------- |
-| store_prompts  | boolean | Store raw prompts   |
-| store_outputs  | boolean | Store model outputs |
-| retention_days | integer | Retention duration  |
-
-### Notes
-
-* Hashing MAY be used instead of raw storage.
-* Storage backend is out of scope for v0.1.
-
----
-
-## 8. enforcement (OPTIONAL)
-
-Defines default behavior on policy violation.
+Example:
 
 ```yaml
-enforcement:
-  on_violation: block
-```
+extends: base.yaml
 
-### Fields
-
-| Field        | Type | Description                  |
-| ------------ | ---- | ---------------------------- |
-| on_violation | enum | `block`, `modify`, or `warn` |
-
-### Meanings
-
-* `block`: Reject request or response
-* `modify`: Apply redaction or transformation
-* `warn`: Allow but emit audit event
-
----
-
-## Policy Evaluation Outcome (Normative)
-
-Every policy evaluation MUST return:
-
-```json
-{
-  "decision": "ALLOW | BLOCK | MODIFY",
-  "reason": "human-readable explanation",
-  "policy_section": "data.pii",
-  "policy_version": "0.1"
-}
+data:
+  pii:
+    action: block
 ```
 
 ---
 
 ## Defaults & Implicit Behavior
 
-* If no policy is present → **ALLOW** (implementation choice)
-* If a policy exists but a required constraint is violated → **BLOCK**
-* Deny rules override allow rules
-* Explicit policies override defaults
+- Policies are evaluated only after successful validation
+- Absence of a policy section implies no governance for that dimension
+- Enforcement without a valid policy is undefined and discouraged
 
 ---
 
-## Out of Scope for v0.1
+## Explicit Non-Goals (Schema v0.1)
 
-The following are **explicitly excluded**:
+The following are **intentionally out of scope**:
 
-* Conditional logic (`if / then`)
-* Scoring or risk weighting
-* Learning or adaptive policies
-* Tool / agent permissions
-* UI or visual policy editors
-* Legal interpretations of regulations
+- Access control / IAM semantics
+- Prompt or content moderation rules
+- ML-based safety classifiers
+- Logging or retention configuration
+- Enforcement behavior configuration
+- Compliance certifications or mappings
 
-These may appear in **v0.2+** only after real-world usage.
+These may be introduced only in **future schema versions**.
 
 ---
 
-## Forward Compatibility
+## Stability & Compatibility
 
-* New fields MUST NOT break v0.1 policies
-* Unknown fields SHOULD be ignored with warnings
-* Schema versioning is mandatory
+- Schema v0.1 is **feature-frozen in ai-governor v0.3**
+- Backward-incompatible changes require a new schema version
+- Enforcement and audit guarantees are defined in `docs/STABILITY.md`
 
+---
+
+## Summary
+
+Policy schema v0.1 defines a **minimal, enforceable contract** for LLM governance.
+
+It is designed to be:
+- predictable
+- composable
+- reviewable
+- safe to depend on
+
+Nothing more — and nothing less.
