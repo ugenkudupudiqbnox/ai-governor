@@ -220,6 +220,11 @@ else:
 
 ---
 
+Read the Quick Start Guide here:  
+👉 `docs/QUICKSTART.md`
+
+---
+
 ## Contributing
 
 Please read `CONTRIBUTING.md` before opening issues or pull requests.  
