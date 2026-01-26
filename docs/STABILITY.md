@@ -8,7 +8,8 @@ From this point forward:
 
 * No new governance concepts will be added to v0.3
 * Only bug fixes, documentation updates, and internal hardening are allowed
-* Breaking changes require a **minor version bump** (v0.4)
+* Breaking changes require a **new minor release line** (v0.4).
+
 
 ---
 
@@ -53,6 +54,8 @@ Governance checks execute in the following deterministic order:
 5. Redaction (if applicable)
 
 This order is **guaranteed** for all v0.3.x releases.
+
+Internal helper methods and return object structure are not part of the public stability contract.
 
 ---
 
@@ -237,4 +240,6 @@ v0.3 is the first version of ai-governor that is:
 > **Composable, enforceable, auditable, and stable enough to trust.**
 
 All future work builds on this foundation.
+
+For usage examples and demos, see the main README.
 
