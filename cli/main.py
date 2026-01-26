@@ -31,6 +31,11 @@ def main():
     enforce_parser.add_argument("--model", required=True, help="Requested model")
     enforce_parser.add_argument("--max-tokens", type=int, help="Requested max tokens")
     enforce_parser.add_argument(
+        "--region",
+        help="Request region / jurisdiction (e.g. IN, EU, US)",
+    )
+
+    enforce_parser.add_argument(
         "--text",
         help="Text input or @file.txt",
     )

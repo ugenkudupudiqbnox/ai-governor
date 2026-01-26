@@ -38,6 +38,7 @@ def run_enforce(args) -> int:
             policy=policy,
             requested_model=args.model,
             requested_max_tokens=args.max_tokens,
+            region=args.region,
             text=text,
             context=context,
         )
