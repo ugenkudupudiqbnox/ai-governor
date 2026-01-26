@@ -157,6 +157,8 @@ result = orchestrator.enforce(
 print(result["final_decision"].to_dict())
 ```
 
+👉 See `docs/QUICKSTART.md`
+
 ---
 
 ## Minimal Code Example (No Providers)
@@ -220,8 +222,13 @@ else:
 
 ---
 
-Read the Quick Start Guide here:  
-👉 `docs/QUICKSTART.md`
+## Security
+
+Security and correctness are first-class concerns in ai-governor.
+
+If you discover a vulnerability, please follow our responsible disclosure process and do not open a public issue.
+
+👉 See `SECURITY.md` for details.
 
 ---
 
