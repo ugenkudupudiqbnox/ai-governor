@@ -4,12 +4,6 @@
 
 ai-governor is under active development.
 
-| Version        | Supported |
-| -------------- | --------- |
-| v0.2.x (alpha) | ✅ Yes     |
-| v0.1.x         | ❌ No      |
-| < v0.1         | ❌ No      |
-
 Security fixes are applied only to the **latest active alpha version**.
 
 ---
@@ -104,9 +98,11 @@ Security issues are treated as **governance failures**, not edge cases.
 
 ## Final Note
 
-ai-governor is early-stage software, but security and correctness are first-class concerns.
+ai-governor is early-stage but feature-frozen software.
 
 If something feels ambiguous, unsafe, or bypassable —
 **we want to hear about it.**
+
+Stability and compatibility guarantees are documented in `docs/STABILITY.md`.
 
 Thank you for helping make governance infrastructure more reliable.
