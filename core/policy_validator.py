@@ -98,10 +98,15 @@ class PolicyValidator:
                     "data.pii.action must be one of: block, redact"
                 )
 
-        # Tool policy (v0.3 prep – optional)
+        # Tool policy validation (v0.3)
         tools = resolved.get("tools")
-        if tools is not None and not isinstance(tools, dict):
-            errors.append("tools must be a mapping")
+        if tools is not None:
+            if not isinstance(tools, dict):
+                errors.append("tools must be a mapping")
+
+            for key in ("allow", "deny"):
+                if key in tools and not isinstance(tools[key], list):
+                    errors.append(f"tools.{key} must be a list")
 
         # ------------------------------------------------------------------
         # 3. Final result

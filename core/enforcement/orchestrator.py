@@ -9,6 +9,7 @@ from core.enforcement.model import enforce_model_policy
 from core.enforcement.data import enforce_pii_policy
 from core.redaction.engine import RedactionEngine
 from core.enforcement.region import enforce_region_policy
+from core.enforcement.tools import enforce_tool_policy
 
 
 class EnforcementOrchestrator:
@@ -35,6 +36,7 @@ class EnforcementOrchestrator:
         requested_model: str,
         requested_max_tokens: Optional[int] = None,
         region: Optional[str] = None,
+        tool_name: Optional[str] = None,
         text: Optional[str] = None,
         context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
@@ -89,7 +91,21 @@ class EnforcementOrchestrator:
             return self._finalize(region_decision, decisions, output_text)
 
         # ------------------------------------------------------------------
-        # 4. PII / data enforcement
+        # 4. Tool enforcement (v0.3)
+        # ------------------------------------------------------------------
+        tool_decision = enforce_tool_policy(
+            policy=policy,
+            tool_name=tool_name,
+        )
+
+        decisions.append(tool_decision)
+        self.audit_emitter.emit(tool_decision, context)
+
+        if tool_decision.decision == DecisionType.BLOCK:
+            return self._finalize(tool_decision, decisions, output_text)
+
+        # ------------------------------------------------------------------
+        # 5. PII / data enforcement
         # ------------------------------------------------------------------
         if text is not None:
             pii_decision = enforce_pii_policy(
@@ -125,7 +141,7 @@ class EnforcementOrchestrator:
                 return self._finalize(pii_decision, decisions, output_text)
 
         # ------------------------------------------------------------------
-        # 5. Resolve final decision
+        # 6. Resolve final decision
         # ------------------------------------------------------------------
         final_decision = self._resolve_final(decisions)
         return self._finalize(final_decision, decisions, output_text)
