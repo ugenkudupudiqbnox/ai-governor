@@ -1,14 +1,18 @@
-# ai-governor – Quick Start Guide
+# ai-governor – Quick Start Guide (v0.3)
 
-This guide helps you run **model-level governance** locally using **ai-governor** — no LLM providers, no API keys, no cloud services.
+This guide helps you run **model-level governance** locally using **ai-governor**.
 
-You’ll validate a policy, enforce it, redact PII, and generate audit logs.
+No LLM providers.  
+No API keys.  
+No cloud services.
+
+You will validate a policy, enforce it, redact PII, and generate audit-grade evidence.
 
 ---
 
 ## 1️⃣ Install (Editable / Local)
 
-From the repo root:
+From the repository root:
 
 ```bash
 python -m venv .venv
@@ -16,7 +20,7 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-Verify:
+Verify installation:
 
 ```bash
 ai-governor version
@@ -45,10 +49,13 @@ data:
       - EU
   pii:
     action: redact
-
-enforcement:
-  on_violation: block
 ```
+
+This policy:
+- Allows only approved models
+- Restricts regions
+- Redacts detected PII
+- Produces deterministic decisions
 
 ---
 
@@ -64,94 +71,59 @@ Expected output:
 ✔ Policy is valid
 ```
 
-This step ensures the policy is **structurally correct and enforceable**.
+Policy validation:
+- Resolves inheritance (if present)
+- Rejects invalid schemas
+- Prevents ambiguous enforcement
 
 ---
 
 ## 4️⃣ Enforce Governance (ALLOW)
 
 ```bash
-ai-governor enforce \
-  --policy policy.yaml \
-  --model gpt-4.1 \
-  --region IN \
-  --text "Hello world"
-```
-
-Output:
-
-```json
-{
-  "final_decision": "ALLOW",
-  "reason": "Region 'IN' is allowed by policy",
-  "policy_section": "data.regions"
-}
+ai-governor enforce   --policy policy.yaml   --model gpt-4.1   --region IN   --text "Hello world"
 ```
 
 Exit code: `0`
+
+Meaning: execution may proceed.
 
 ---
 
 ## 5️⃣ Enforce Governance (MODIFY – PII Redaction)
 
 ```bash
-ai-governor enforce \
-  --policy policy.yaml \
-  --model gpt-4.1 \
-  --region IN \
-  --text "Contact me at test@example.com"
-```
-
-Output:
-
-```json
-{
-  "final_decision": "MODIFY",
-  "reason": "PII detected and policy requires redaction",
-  "policy_section": "data.pii"
-}
+ai-governor enforce   --policy policy.yaml   --model gpt-4.1   --region IN   --text "Contact me at test@example.com"
 ```
 
 Exit code: `10`
 
-Internally:
-
-* Email is detected
-* Redaction engine replaces it
-* Audit event is emitted
+Meaning:
+- PII detected
+- Input was redacted
+- Execution may proceed **only with modified input**
 
 ---
 
 ## 6️⃣ Enforce Governance (BLOCK – Region Violation)
 
 ```bash
-ai-governor enforce \
-  --policy policy.yaml \
-  --model gpt-4.1 \
-  --region US \
-  --text "Hello"
-```
-
-Output:
-
-```json
-{
-  "final_decision": "BLOCK",
-  "reason": "Region 'US' is not allowed by policy",
-  "policy_section": "data.regions"
-}
+ai-governor enforce   --policy policy.yaml   --model gpt-4.1   --region US   --text "Hello"
 ```
 
 Exit code: `20`
+
+Meaning: execution must not proceed.
 
 ---
 
 ## 7️⃣ Audit Logs (Automatic)
 
-Every enforcement emits **JSON audit events**.
+Every enforcement emits a **structured audit event**.
 
 Default: stdout
-Optional: file sink (example):
+
+Example file sink:
 
 ```python
 from core.audit.emitter import AuditEventEmitter
@@ -167,7 +139,9 @@ orchestrator = EnforcementOrchestrator(
 )
 ```
 
-Each line in `audit.jsonl` is a complete, immutable audit record.
+Each line in `audit.jsonl` is a complete, append-only audit record.
+
+If an audit sink fails, enforcement fails by design.
 
 ---
 
@@ -182,105 +156,57 @@ Each line in `audit.jsonl` is a complete, immutable audit record.
 | `2`       | File / parse error          |
 | `3`       | Runtime error               |
 
-Perfect for CI pipelines and policy gates.
+This makes ai-governor suitable for CI/CD policy gates.
 
 ---
 
-## 9️⃣ What You Just Achieved
+## 9️⃣ Demo Application
 
-You enforced:
-
-* ✅ Model allow/deny
-* ✅ Token limits
-* ✅ Region restrictions
-* ✅ PII detection + redaction
-* ✅ Deterministic decisions
-* ✅ Audit-grade evidence
-
-**Without calling an LLM.**
-
----
-
-## Demo Application
-
-This repository includes a **minimal demo application** that shows how **ai-governor** is intended to be used in a real system.
-
-The demo simulates an application boundary that wants to call an LLM, with governance enforced **before** any model invocation.
-
-No external APIs, frameworks, or providers are used.
-
----
-
-### What the Demo Shows
-
-The demo demonstrates:
-
-* Where ai-governor sits in an application
-* How policies are evaluated at runtime
-* How decisions (`ALLOW`, `BLOCK`, `MODIFY`) gate execution
-* How PII redaction works for `MODIFY`
-* How audit events are emitted automatically
-
-This is the **canonical integration pattern**.
-
----
-
-### Location
+A minimal demo application is included under:
 
 ```
 examples/demo_app/
 ```
 
-Contents:
+The demo shows:
+- Governance enforced before any model call
+- Explicit BLOCK / MODIFY behavior
+- Deterministic redaction
+- Automatic audit emission
 
-* `app.py` — demo application
-* `policy.yaml` — governance policy
-* `request_allow.json` — allowed request
-* `request_modify.json` — PII redaction example
-* `request_block.json` — blocked request
-
----
-
-### Run the Demo
-
-From the repository root:
-
-```bash
-python examples/demo_app/app.py examples/demo_app/request_allow.json
-```
-
-Try the other requests to see different governance outcomes:
+Run:
 
 ```bash
 python examples/demo_app/app.py examples/demo_app/request_modify.json
-python examples/demo_app/app.py examples/demo_app/request_block.json
 ```
 
----
-
-### Design Note
-
-The demo intentionally:
-
-* Uses **declared model identifiers** (strings only)
-* Does **not** call a real LLM
-* Focuses purely on **governance correctness**
-
-This keeps the behavior deterministic and easy to reason about.
+A FastAPI-based HTTP demo is also available under `examples/fastapi_demo/`
+(illustrative only, not part of the stable API).
 
 ---
 
-### Why This Matters
+## 10️⃣ What You Just Achieved
 
-Most governance failures happen at **integration boundaries**.
+You enforced:
 
-This demo makes that boundary explicit and reproducible.
+- Model allow / deny rules
+- Region restrictions
+- Tool governance (if configured)
+- PII detection and redaction
+- Deterministic decisions
+- Audit-grade evidence
+
+**Without calling an LLM.**
 
 ---
 
-## Philosophy Reminder
+## Stability Note
 
-ai-governor does not try to make AI *safe*.
+ai-governor v0.3 is feature-frozen.
 
+See `docs/STABILITY.md` for compatibility and upgrade guarantees.
+
+---
+
+ai-governor does not try to make AI *safe*.  
 It makes AI **governable**.
-
