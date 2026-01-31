@@ -1,6 +1,10 @@
-# ai-governor
+<p align="center">
+  <img src="docs/assets/header.png" alt="AI Governor" style="width:600px"/>
+</p>
 
-**ai-governor** is an open-source, MIT-licensed **model-level governance runtime** for Large Language Model (LLM) systems.
+# AI Governor
+
+**AI Governorr** is an open-source, MIT-licensed **model-level governance runtime** for Large Language Model (LLM) systems.
 
 It provides deterministic, auditable controls that sit **between your application and the model**, enforcing policy *before* any model execution occurs.
 
@@ -9,7 +13,7 @@ It is a **governance control plane**.
 
 ---
 
-## Why ai-governor Exists
+## Why AI Governor Exists
 
 LLMs are now production infrastructure:
 - handling sensitive data
@@ -51,7 +55,7 @@ No LLM calls. No provider lock-in.
 
 ---
 
-## What ai-governor Is Not
+## What AI Governor Is Not
 
 ai-governor is **not**:
 - a chatbot framework
