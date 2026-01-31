@@ -66,6 +66,8 @@ class PolicyValidator:
         # 2. Schema-level validation
         # ------------------------------------------------------------------
         version = resolved.get("version")
+        if version is None:
+            raise ValueError("Policy must have a 'version' field")
         if version != self.SUPPORTED_VERSION:
             errors.append(
                 f"Unsupported policy version '{version}'. "
@@ -107,6 +109,14 @@ class PolicyValidator:
             for key in ("allow", "deny"):
                 if key in tools and not isinstance(tools[key], list):
                     errors.append(f"tools.{key} must be a list")
+
+        # Check for unknown top-level keys
+        allowed_keys = {"version", "metadata", "model", "data", "tools", "extends"}
+        unknown_keys = set(resolved.keys()) - allowed_keys
+        if unknown_keys:
+            raise ValueError(
+                f"Unknown policy keys: {', '.join(sorted(unknown_keys))}"
+            )
 
         # ------------------------------------------------------------------
         # 3. Final result

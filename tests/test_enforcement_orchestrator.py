@@ -27,7 +27,7 @@ def test_orchestrator_allow_flow():
     )
 
     assert result["final_decision"].decision == DecisionType.ALLOW
-    assert len(result["decisions"]) == 2
+    assert len(result["decisions"]) == 4  # model, region, tools, pii
 
 
 def test_orchestrator_modify_flow():

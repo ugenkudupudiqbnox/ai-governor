@@ -12,7 +12,6 @@ def test_valid_base_policy():
         "data": {
             "pii": {"action": "redact"},
         },
-        "enforcement": {"on_violation": "block"},
     }
 
     result = PolicyValidator().validate(policy)
