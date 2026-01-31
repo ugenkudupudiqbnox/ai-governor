@@ -3,36 +3,55 @@ name: v0.3 Contract Tests
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - v0.4-dev
 
 jobs:
-  contract-tests:
+  v0-3-contract-tests:
+    name: v0.3 Contract Tests
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Install project
+      - name: Install project and test deps
         run: |
           python -m venv .venv
           source .venv/bin/activate
           pip install -e .
           pip install pytest
 
+      # ---- DEBUG STEP (keep until stable) ----
+      - name: Debug test paths
+        run: |
+          echo "PWD:"
+          pwd
+          echo "Repo root:"
+          ls -la
+          echo "tests/:"
+          ls -la tests || true
+          echo "tests/v0_3_contract/:"
+          ls -la tests/v0_3_contract || true
+
+      # ---- CONTRACT TESTS ----
       - name: Run v0.3 contract tests
         run: |
           source .venv/bin/activate
-          pytest tests/v0_3_contract --junitxml=v0_3_contract_report.xml
+          pytest -q tests/v0_3_contract \
+            --junitxml=./v0_3_contract_report.xml
 
-      - name: Upload contract report
+      # ---- ARTIFACT UPLOAD ----
+      - name: Upload v0.3 contract test report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: v0.3-contract-report
-          path: v0_3_contract_report.xml
+          path: ./v0_3_contract_report.xml
 
