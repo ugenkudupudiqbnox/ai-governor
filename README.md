@@ -3,6 +3,8 @@
 </p>
 
 # ai-governor
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/qPmpZdNYAC)
 
 **ai-governorr** is an open-source, MIT-licensed **model-level governance runtime** for Large Language Model (LLM) systems.
 
@@ -31,7 +33,7 @@ ai-governor exists to close that gap with **governance as code**, enforced at ru
 
 ## Project Status
 
-⚠️ **Alpha (v0.3)**
+**Alpha (v0.3)**
 
 ai-governor provides a **feature-complete governance runtime** with frozen core contracts.  
 It is stable enough for early production use, but APIs and schemas may evolve in future minor versions.
