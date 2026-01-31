@@ -3,7 +3,7 @@
 </p>
 
 # ai-governor
-[![Unit Tests](https://github.com/ugenkudupudiqbnox/ai-governor/docs/assets/badge.svg)](https://github.com/ugenkudupudiqbnox/ai-governor/.github/workflows/v0_3_contract.yml)
+[![Unit Tests](https://github.com/ugenkudupudiqbnox/ai-governor/docs/assets/badge.svg)](https://github.com/ugenkudupudiqbnox/ai-governor/actions/workflows/v0_3_contract.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/qPmpZdNYAC)
 
