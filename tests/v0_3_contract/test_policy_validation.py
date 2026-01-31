@@ -1,3 +1,4 @@
+# DO NOT MODIFY — v0.3 CONTRACT TEST
 
 import pytest
 from core.policy_validator import PolicyValidator

@@ -1,3 +1,4 @@
+# DO NOT MODIFY — v0.3 CONTRACT TEST
 
 from core.audit.emitter import AuditEventEmitter
 from core.enforcement.orchestrator import EnforcementOrchestrator
