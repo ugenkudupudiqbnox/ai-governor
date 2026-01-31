@@ -68,6 +68,7 @@ class PolicyValidator:
         version = resolved.get("version")
         if version is None:
             raise ValueError("Policy must have a 'version' field")
+        version = str(version)  
         if version != self.SUPPORTED_VERSION:
             errors.append(
                 f"Unsupported policy version '{version}'. "
