@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/qPmpZdNYAC)
 
-**ai-governorr** is an open-source, MIT-licensed **model-level governance runtime** for Large Language Model (LLM) systems.
+**ai-governor** is an open-source, MIT-licensed **model-level governance runtime** for Large Language Model (LLM) systems.
 
 It provides deterministic, auditable controls that sit **between your application and the model**, enforcing policy *before* any model execution occurs.
 
