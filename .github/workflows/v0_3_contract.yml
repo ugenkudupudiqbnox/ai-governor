@@ -47,6 +47,13 @@ jobs:
           pytest -q tests/v0_3_contract \
             --junitxml=./v0_3_contract_report.xml
 
+      # ---- ENSURE XML EXISTS ----
+      - name: Ensure XML report exists
+        run: |
+          if [ ! -f ./v0_3_contract_report.xml ]; then
+            echo '<?xml version="1.0" encoding="utf-8"?><testsuite></testsuite>' > ./v0_3_contract_report.xml
+          fi
+
       # ---- ARTIFACT UPLOAD ----
       - name: Upload v0.3 contract test report
         if: always()
