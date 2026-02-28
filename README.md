@@ -209,3 +209,11 @@ MIT License. See [`LICENSE`](LICENSE).
 
 **ai-governor does not try to make AI safe.**  
 It makes AI **governable**.
+
+## v0.4.0-alpha
+
+- Adds schema v0.2 support
+- Adds metadata validation
+- Adds model family governance
+- Adds tool argument-level governance
+- Maintains full v0.3 contract compatibility
