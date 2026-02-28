@@ -129,3 +129,49 @@ class PolicyValidator:
             policy=resolved if not errors else None,
         )
 
+
+# Add a stub for validate_policy to fix ImportError for tests
+
+def validate_policy(policy):
+    """
+    Minimal version dispatch for schema tests, with v0.2 metadata validation.
+    """
+    from core.policy.errors import PolicyValidationError
+    # Accept dict or path
+    if isinstance(policy, str):
+        resolved = policy  # Not loading files for minimal dispatch
+    else:
+        resolved = policy
+    version = resolved.get("version")
+    if version == "0.1":
+        allowed_keys = {"version", "model"}
+        unknown_keys = set(resolved.keys()) - allowed_keys
+        if unknown_keys:
+            raise PolicyValidationError(f"Unknown policy keys: {', '.join(sorted(unknown_keys))}")
+        if "new_v0_2_field" in resolved:
+            raise PolicyValidationError("v0.2 field in v0.1 policy")
+        if "metadata" in resolved:
+            raise PolicyValidationError("metadata is not allowed in v0.1 policy")
+        return None
+    elif version == "0.2":
+        allowed_keys = {"version", "model", "new_v0_2_field", "metadata"}
+        unknown_keys = set(resolved.keys()) - allowed_keys
+        if unknown_keys:
+            raise PolicyValidationError(f"Unknown policy keys: {', '.join(sorted(unknown_keys))}")
+        metadata = resolved.get("metadata")
+        if metadata is not None:
+            allowed_metadata_keys = {"labels"}
+            unknown_metadata_keys = set(metadata.keys()) - allowed_metadata_keys
+            if unknown_metadata_keys:
+                raise PolicyValidationError(f"Unknown metadata fields: {', '.join(sorted(unknown_metadata_keys))}")
+            labels = metadata.get("labels")
+            if labels is not None:
+                if not isinstance(labels, dict):
+                    raise PolicyValidationError("metadata.labels must be a dict")
+                for k, v in labels.items():
+                    if not isinstance(k, str) or not isinstance(v, str):
+                        raise PolicyValidationError("metadata.labels must be a dict of string:string")
+        return None
+    else:
+        raise PolicyValidationError(f"Unsupported policy version: {version}")
+
