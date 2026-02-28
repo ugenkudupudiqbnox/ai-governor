@@ -1,6 +1,6 @@
 [project]
 name = "ai-governor"
-version = "0.4.0-alpha
+version = "0.4.0-alpha"
 description = "Model-level governance and compliance framework for LLM systems"
 authors = [{ name = "Ugendreshwar Kudupudi" }]
 license = { text = "MIT" }
