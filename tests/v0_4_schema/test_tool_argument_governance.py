@@ -3,9 +3,42 @@ from core.policy.errors import PolicyValidationError
 
 def enforce_tool_policy(policy, tool_name, args):
     """
-    Stub for enforcement. Do not implement logic.
+    Minimal tool argument validation for version 0.2.
     """
-    raise NotImplementedError("Tool argument governance not implemented.")
+    tools = policy.get("tools", {})
+    deny = set(tools.get("deny", []))
+    if tool_name in deny:
+        raise PolicyValidationError(f"Tool '{tool_name}' is denied.")
+    allow = tools.get("allow", [])
+    allowed_tool = None
+    for entry in allow:
+        if isinstance(entry, dict) and entry.get("name") == tool_name:
+            allowed_tool = entry
+            break
+    if allowed_tool is None:
+        raise PolicyValidationError(f"Tool '{tool_name}' is not allowed.")
+    arg_spec = allowed_tool.get("args", {})
+    # Check required arguments
+    for arg, spec in arg_spec.items():
+        if spec.get("required") and arg not in args:
+            raise PolicyValidationError(f"Missing required argument: {arg}")
+    # Check types and min/max
+    for arg, value in args.items():
+        if arg not in arg_spec:
+            continue  # Ignore extra args
+        spec = arg_spec[arg]
+        expected_type = spec.get("type")
+        if expected_type == "string" and not isinstance(value, str):
+            raise PolicyValidationError(f"Argument '{arg}' must be string")
+        if expected_type == "int":
+            if not isinstance(value, int):
+                raise PolicyValidationError(f"Argument '{arg}' must be int")
+            if "min" in spec and value < spec["min"]:
+                raise PolicyValidationError(f"Argument '{arg}' below min")
+            if "max" in spec and value > spec["max"]:
+                raise PolicyValidationError(f"Argument '{arg}' above max")
+    # If all checks pass, allow
+    return None
 
 # Example v0.2 policy with argument-level governance
 policy = {

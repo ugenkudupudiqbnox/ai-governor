@@ -8,11 +8,11 @@ v0_1_policy = {
     "model": {"allow": ["gpt-4"]},
 }
 
-# Example v0.2 policy (minimal)
+# Example v0.2 policy (minimal, only allowed fields)
 v0_2_policy = {
     "version": "0.2",
     "model": {"allow": ["gpt-4"]},
-    "new_v0_2_field": True,  # Simulate a v0.2-only field
+    "metadata": {"labels": {"env": "prod"}},
 }
 
 # Unknown version
@@ -25,7 +25,7 @@ unknown_version_policy = {
 v0_1_with_v0_2_field = {
     "version": "0.1",
     "model": {"allow": ["gpt-4"]},
-    "new_v0_2_field": True,
+    "metadata": {"labels": {"env": "prod"}},
 }
 
 def test_v0_1_policy_validates():

@@ -134,15 +134,34 @@ class PolicyValidator:
 
 def validate_policy(policy):
     """
-    Minimal metadata validation for schema version 0.2.
+    Minimal metadata and strict top-level field validation for schema version 0.1 and 0.2.
     """
     from core.policy.errors import PolicyValidationError
+    ALLOWED_V0_1_KEYS = {
+        "version",
+        "model",
+        "tools",
+        "data",
+        "region",
+        "extends",
+    }
+    ALLOWED_V0_2_KEYS = ALLOWED_V0_1_KEYS | {"metadata"}
     if isinstance(policy, str):
         resolved = policy
     else:
         resolved = policy
     version = resolved.get("version")
-    if version == "0.2":
+    if version == "0.1":
+        unexpected = set(resolved.keys()) - ALLOWED_V0_1_KEYS
+        if unexpected:
+            raise PolicyValidationError(f"Unsupported fields for version 0.1: {unexpected}")
+        if "metadata" in resolved:
+            raise PolicyValidationError("metadata is not allowed in v0.1 policy")
+        return None
+    elif version == "0.2":
+        unexpected = set(resolved.keys()) - ALLOWED_V0_2_KEYS
+        if unexpected:
+            raise PolicyValidationError(f"Unsupported fields for version 0.2: {unexpected}")
         metadata = resolved.get("metadata")
         if metadata is not None:
             if set(metadata.keys()) != {"labels"}:
@@ -153,10 +172,6 @@ def validate_policy(policy):
             for k, v in labels.items():
                 if not isinstance(k, str) or not isinstance(v, str):
                     raise PolicyValidationError("metadata.labels must be a dict of string:string")
-        return None
-    elif version == "0.1":
-        if "metadata" in resolved:
-            raise PolicyValidationError("metadata is not allowed in v0.1 policy")
         return None
     else:
         raise PolicyValidationError(f"Unsupported policy version: {version}")
