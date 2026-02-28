@@ -13,3 +13,7 @@ class PolicyCycleError(PolicyInheritanceError):
 class PolicyVersionMismatchError(PolicyInheritanceError):
     pass
 
+# Add PolicyValidationError for test compatibility
+class PolicyValidationError(PolicyError):
+    pass
+

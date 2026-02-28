@@ -1,11 +1,13 @@
 import pytest
 from core.policy.errors import PolicyValidationError
+from core.policy_validator import validate_policy
+
+# Thin wrapper for metadata validation
 
 def validate_metadata_policy(policy):
-    """
-    Stub for metadata validation. Do not implement logic.
-    """
-    raise NotImplementedError("Metadata support not implemented.")
+    result = validate_policy(policy)
+    if result is not None:
+        return result
 
 # v0.2 policy with valid metadata
 policy_v2_with_metadata = {

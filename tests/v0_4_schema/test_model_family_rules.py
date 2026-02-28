@@ -3,9 +3,37 @@ from core.policy.errors import PolicyValidationError
 
 def enforce_model_policy(policy, model_name):
     """
-    Stub for enforcement. Do not implement logic.
+    Minimal model family evaluation for v0.2 spec.
+    deny must override allow. Explicit model rules override family rules.
     """
-    raise NotImplementedError("Model family rules not implemented.")
+    from core.policy.errors import PolicyValidationError
+    model_section = policy.get("model", {})
+    allow = set(model_section.get("allow", []))
+    deny = set(model_section.get("deny", []))
+    families = model_section.get("families", {})
+
+    # Explicit deny overrides everything
+    if model_name in deny:
+        raise PolicyValidationError(f"Model {model_name} is explicitly denied.")
+    # Explicit allow overrides family deny
+    if model_name in allow:
+        return None
+
+    # Family rules
+    family = None
+    for fam in families:
+        if model_name.startswith(fam):
+            family = fam
+            break
+    if family:
+        fam_rule = families[family]
+        if fam_rule.get("deny"):
+            raise PolicyValidationError(f"Model family {family} is denied.")
+        if fam_rule.get("allow"):
+            return None
+
+    # Default: block if not explicitly allowed
+    raise PolicyValidationError(f"Model {model_name} is not allowed.")
 
 # Example v0.2 policy with family rules
 policy = {
